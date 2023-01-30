@@ -96,30 +96,30 @@ namespace FetchDependencies
 
         private static async Task DownloadPlugin(string path)
         {
-            string sourceFile = @"D:\Games\DieMoeAct\Plugins\FFXIV_ACT_Plugin.dll";
-            string destinationFile = path;
-            try
-            {
-                File.Copy(sourceFile, destinationFile, true);
-            }
-            catch (IOException iox)
-            {
-                Console.WriteLine(iox.Message);
-            }
+            //string sourceFile = @"D:\Games\DieMoeAct\Plugins\FFXIV_ACT_Plugin.dll";
+            //string destinationFile = path;
+            //try
+            //{
+            //    File.Copy(sourceFile, destinationFile, true);
+            //}
+            //catch (IOException iox)
+            //{
+            //    Console.WriteLine(iox.Message);
+            //}
 
             //string url = "";
             //HttpWebRequest req = (HttpWebRequest)WebRequest.Create("https://github.com/TundraWork/FFXIV_ACT_Plugin_CN/releases/latest");
             //req.Method = "HEAD";
-            //req.AllowAutoRedirect = false;  
+            //req.AllowAutoRedirect = false;
             //HttpWebResponse myResp = (HttpWebResponse)req.GetResponse();
             //if (myResp.StatusCode == HttpStatusCode.Redirect)
             //    url = myResp.GetResponseHeader("Location");
             //var bcd = url.Split(@"/")[7];
-            //var httpClient = new HttpClient();
-            //await using var downloadStream = await httpClient.GetStreamAsync($"https://github.com/TundraWork/FFXIV_ACT_Plugin_CN/releases/download/{bcd}/FFXIV_ACT_Plugin.dll");
-            //await using var zipFileStream = new FileStream(path, FileMode.Create);
-            //await downloadStream.CopyToAsync(zipFileStream);
-            //zipFileStream.Close();
+            var httpClient = new HttpClient();
+            await using var downloadStream = await httpClient.GetStreamAsync($"https://github.com/TundraWork/FFXIV_ACT_Plugin_CN/releases/download/2.23.1.1/FFXIV_ACT_Plugin.dll");
+            await using var zipFileStream = new FileStream(path, FileMode.Create);
+            await downloadStream.CopyToAsync(zipFileStream);
+            zipFileStream.Close();
         }
     }
 }
