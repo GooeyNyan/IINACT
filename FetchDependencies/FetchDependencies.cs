@@ -96,17 +96,6 @@ namespace FetchDependencies
 
         private static async Task DownloadPlugin(string path)
         {
-            //string sourceFile = @"D:\Games\DieMoeAct\Plugins\FFXIV_ACT_Plugin.dll";
-            //string destinationFile = path;
-            //try
-            //{
-            //    File.Copy(sourceFile, destinationFile, true);
-            //}
-            //catch (IOException iox)
-            //{
-            //    Console.WriteLine(iox.Message);
-            //}
-
             //string url = "";
             //HttpWebRequest req = (HttpWebRequest)WebRequest.Create("https://github.com/TundraWork/FFXIV_ACT_Plugin_CN/releases/latest");
             //req.Method = "HEAD";

@@ -1,15 +1,19 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Newtonsoft.Json.Linq;
+using RainbowMage.OverlayPlugin;
 
-namespace RainbowMage.OverlayPlugin.MemoryProcessors {
-    public class FFXIVProcessIntl : FFXIVProcess {
+namespace Cactbot
+{
+    public class FFXIVProcessIntl : FFXIVProcess
+    {
         // Last updated for FFXIV 6.3
 
         [StructLayout(LayoutKind.Explicit)]
-        public unsafe struct EntityMemory {
+        public unsafe struct EntityMemory
+        {
             public static int Size => Marshal.SizeOf(typeof(EntityMemory));
 
             // Unknown size, but this is the bytes up to the next field.
@@ -47,7 +51,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
         }
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct CharacterDetails {
+        public struct CharacterDetails
+        {
 
             [FieldOffset(0x00)]
             public int hp;
@@ -76,8 +81,7 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x1D)]
             public byte level;
         }
-
-        public FFXIVProcessIntl(TinyIoCContainer container) : base(container) { }
+        public FFXIVProcessIntl(ILogger logger) : base(logger) { }
 
         // TODO: all of this could be refactored into structures of some sort
         // instead of just being loose variables everywhere.
@@ -118,59 +122,79 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
         // The signature finds a pointer in the executable code which uses RIP addressing.
         private static bool kJobDataSignatureRIP = true;
 
-        internal override void ReadSignatures() {
+        internal override void ReadSignatures()
+        {
             List<IntPtr> p;
 
             // TODO: for now, support multiple matches on charmap signature.
             // This sig returns two matches that are identical for many, many characters.
             // They both point to the same spot, so verify these have the same value.
             p = SigScan(kCharmapSignature, kCharmapSignatureOffset, kCharmapSignatureRIP);
-            if (p.Count == 0) {
-                logger_.Log(LogLevel.Error, "Charmap signature found " + p.Count + " matches");
-            } else {
-                var player_ptr_value = IntPtr.Zero;
-                foreach (var ptr in p) {
-                    var addr = IntPtr.Add(ptr, kCharmapStructOffsetPlayer);
-                    var value = ReadIntPtr(addr);
-                    if (player_ptr_value == IntPtr.Zero || player_ptr_value == value) {
+            if (p.Count == 0)
+            {
+                logger_.Log(LogLevel.Error, "BaitSignatureFoundMultipleMatchesErrorMessage", p.Count);
+            }
+            else
+            {
+                IntPtr player_ptr_value = IntPtr.Zero;
+                foreach (IntPtr ptr in p)
+                {
+                    IntPtr addr = IntPtr.Add(ptr, kCharmapStructOffsetPlayer);
+                    IntPtr value = ReadIntPtr(addr);
+                    if (player_ptr_value == IntPtr.Zero || player_ptr_value == value)
+                    {
                         player_ptr_value = value;
                         player_ptr_addr_ = addr;
-                    } else {
-                        logger_.Log(LogLevel.Error, "Charmap signature found, but conflicting match");
+                    }
+                    else
+                    {
+                        logger_.Log(LogLevel.Error, "BaitSignatureFoundMultipleMatchesErrorMessage");
                     }
                 }
             }
 
             p = SigScan(kJobDataSignature, kJobDataSignatureOffset, kJobDataSignatureRIP);
-            if (p.Count != 1) {
-                logger_.Log(LogLevel.Error, "Job signature found " + p.Count + " matches");
-            } else {
+            if (p.Count != 1)
+            {
+                logger_.Log(LogLevel.Error, "BaitSignatureFoundMultipleMatchesErrorMessage", p.Count);
+            }
+            else
+            {
                 job_data_outer_addr_ = IntPtr.Add(p[0], kJobDataOuterStructOffset);
             }
 
             p = SigScan(kInCombatSignature, kInCombatSignatureOffset, kInCombatSignatureRIP, kInCombatRipOffset);
-            if (p.Count != 1) {
-                logger_.Log(LogLevel.Error, "In combat signature found " + p.Count + " matches");
-            } else {
+            if (p.Count != 1)
+            {
+                logger_.Log(LogLevel.Error, "BaitSignatureFoundMultipleMatchesErrorMessage", p.Count);
+            }   
+            else
+            {
                 in_combat_addr_ = p[0];
             }
 
             p = SigScan(kBaitSignature, kBaitBaseOffset, kBaitBaseRIP);
-            if (p.Count != 1) {
-                logger_.Log(LogLevel.Error, "Bait signature found " + p.Count + " matches");
-            } else {
+            if (p.Count != 1)
+            {
+                logger_.Log(LogLevel.Error, "BaitSignatureFoundMultipleMatchesErrorMessage", p.Count);
+            }
+            else
+            {
                 bait_addr_ = p[0];
             }
         }
 
-        public unsafe override EntityData GetEntityDataFromByteArray(byte[] source) {
-            fixed (byte* p = source) {
-                var mem = *(EntityMemory*)&p[0];
+        public unsafe override EntityData GetEntityDataFromByteArray(byte[] source)
+        {
+            fixed (byte* p = source)
+            {
+                EntityMemory mem = *(EntityMemory*)&p[0];
 
                 // dump '\0' string terminators
                 var memoryName = System.Text.Encoding.UTF8.GetString(mem.Name, EntityMemory.nameBytes).Split(new[] { '\0' }, 2)[0];
 
-                var entity = new EntityData() {
+                EntityData entity = new EntityData()
+                {
                     name = memoryName,
                     id = mem.id,
                     type = mem.type,
@@ -180,7 +204,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
                     pos_z = mem.pos_z,
                     rotation = mem.rotation,
                 };
-                if (entity.type == EntityType.PC || entity.type == EntityType.Monster) {
+                if (entity.type == EntityType.PC || entity.type == EntityType.Monster)
+                {
                     entity.job = mem.charDetails.job;
 
                     entity.hp = mem.charDetails.hp;
@@ -191,20 +216,24 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
                     entity.max_mp = 10000;
                     entity.shield_value = mem.shieldPercentage * entity.max_hp / 100;
 
-                    if (IsGatherer(entity.job)) {
+                    if (IsGatherer(entity.job))
+                    {
                         entity.gp = mem.charDetails.gp;
                         entity.max_gp = mem.charDetails.max_gp;
                     }
-                    if (IsCrafter(entity.job)) {
+                    if (IsCrafter(entity.job))
+                    {
                         entity.cp = mem.charDetails.cp;
                         entity.max_cp = mem.charDetails.max_cp;
                     }
 
                     entity.level = mem.charDetails.level;
 
-                    var job_bytes = GetRawJobSpecificDataBytes();
-                    if (job_bytes != null) {
-                        for (var i = 0; i < job_bytes.Length; ++i) {
+                    byte[] job_bytes = GetRawJobSpecificDataBytes();
+                    if (job_bytes != null)
+                    {
+                        for (var i = 0; i < job_bytes.Length; ++i)
+                        {
                             if (entity.debug_job != "")
                                 entity.debug_job += " ";
                             entity.debug_job += string.Format("{0:x2}", job_bytes[i]);
@@ -215,17 +244,19 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             }
         }
 
-        internal override EntityData GetEntityData(IntPtr entity_ptr) {
+        internal override EntityData GetEntityData(IntPtr entity_ptr)
+        {
             if (entity_ptr == IntPtr.Zero)
                 return null;
-            var source = Read8(entity_ptr, EntityMemory.Size);
+            byte[] source = Read8(entity_ptr, EntityMemory.Size);
             return GetEntityDataFromByteArray(source);
         }
-        public override EntityData GetSelfData() {
+        public override EntityData GetSelfData()
+        {
             if (!HasProcess() || player_ptr_addr_ == IntPtr.Zero)
                 return null;
 
-            var entity_ptr = ReadIntPtr(player_ptr_addr_);
+            IntPtr entity_ptr = ReadIntPtr(player_ptr_addr_);
             if (entity_ptr == IntPtr.Zero)
                 return null;
             var data = GetEntityData(entity_ptr);
@@ -234,22 +265,29 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             return data;
         }
 
-        public unsafe override JObject GetJobSpecificData(EntityJob job) {
+        public unsafe override JObject GetJobSpecificData(EntityJob job)
+        {
             if (!HasProcess() || job_data_outer_addr_ == IntPtr.Zero)
                 return null;
 
-            var job_inner_ptr = ReadIntPtr(job_data_outer_addr_);
-            if (job_inner_ptr == IntPtr.Zero) {
+            IntPtr job_inner_ptr = ReadIntPtr(job_data_outer_addr_);
+            if (job_inner_ptr == IntPtr.Zero)
+            {
                 // The pointer can be null when not logged in.
                 return null;
             }
             job_inner_ptr = IntPtr.Add(job_inner_ptr, kJobDataInnerStructOffset);
 
-            fixed (byte* p = Read8(job_inner_ptr, kJobDataInnerStructSize)) {
-                if (p == null) {
+            fixed (byte* p = Read8(job_inner_ptr, kJobDataInnerStructSize))
+            {
+                if (p == null)
+                {
                     return null;
-                } else {
-                    switch (job) {
+                }
+                else
+                {
+                    switch (job)
+                    {
                         case EntityJob.RDM:
                             return JObject.FromObject(*(RedMageJobMemory*)&p[0]);
                         case EntityJob.WAR:
@@ -300,7 +338,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
 
         [Serializable]
         [StructLayout(LayoutKind.Explicit)]
-        public struct RedMageJobMemory {
+        public struct RedMageJobMemory
+        {
             [FieldOffset(0x00)]
             public byte whiteMana;
 
@@ -313,14 +352,16 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
 
         [Serializable]
         [StructLayout(LayoutKind.Explicit)]
-        public struct WarriorJobMemory {
+        public struct WarriorJobMemory
+        {
             [FieldOffset(0x00)]
             public byte beast;
         };
 
         [Serializable]
         [StructLayout(LayoutKind.Explicit)]
-        public struct DarkKnightJobMemory {
+        public struct DarkKnightJobMemory
+        {
             [FieldOffset(0x00)]
             public byte blood;
 
@@ -336,14 +377,16 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
 
         [Serializable]
         [StructLayout(LayoutKind.Explicit)]
-        public struct PaladinJobMemory {
+        public struct PaladinJobMemory
+        {
             [FieldOffset(0x00)]
             public byte oath;
         };
 
         [Serializable]
         [StructLayout(LayoutKind.Explicit)]
-        public struct GunbreakerJobMemory {
+        public struct GunbreakerJobMemory
+        {
             [FieldOffset(0x00)]
             public byte cartridges;
 
@@ -356,9 +399,11 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
 
         [Serializable]
         [StructLayout(LayoutKind.Explicit)]
-        public struct BardJobMemory {
+        public struct BardJobMemory
+        {
             [Flags]
-            private enum SongFlags : byte {
+            private enum SongFlags : byte
+            {
                 None = 0,
                 Ballad = 1, // Mage's Ballad.
                 Paeon = 1 << 1, // Army's Paeon.
@@ -384,8 +429,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x06)]
             private SongFlags songFlags;
 
-            public String songName {
-                get {
+            public String songName
+            {
+                get
+                {
                     if (songFlags.HasFlag(SongFlags.Minuet))
                         return "Minuet";
                     if (songFlags.HasFlag(SongFlags.Ballad))
@@ -396,8 +443,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
                 }
             }
 
-            public String lastPlayed {
-                get {
+            public String lastPlayed
+            {
+                get
+                {
                     if (songFlags.HasFlag(SongFlags.MinuetLastPlayed))
                         return "Minuet";
                     if (songFlags.HasFlag(SongFlags.BalladLastPlayed))
@@ -408,8 +457,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
                 }
             }
 
-            public String[] coda {
-                get {
+            public String[] coda
+            {
+                get
+                {
                     return new[] {
             this.songFlags.HasFlag(SongFlags.BalladCoda) ? "Ballad" : "None",
             this.songFlags.HasFlag(SongFlags.PaeonCoda) ? "Paeon" : "None",
@@ -420,8 +471,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct DancerJobMemory {
-            private enum Step : byte {
+        public struct DancerJobMemory
+        {
+            private enum Step : byte
+            {
                 None = 0,
                 Emboite = 1,
                 Entrechat = 2,
@@ -454,8 +507,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x06)]
             public byte currentStep; // Number of steps executed in current Standard Step/Technical Step combo.
 
-            public string[] steps {
-                get {
+            public string[] steps
+            {
+                get
+                {
                     Step[] _steps = { step1, step2, step3, step4 };
                     return _steps.Select(s => s.ToString()).Where(s => s != "None").ToArray();
                 }
@@ -464,7 +519,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
 
         [Serializable]
         [StructLayout(LayoutKind.Explicit)]
-        public struct DragoonJobMemory {
+        public struct DragoonJobMemory
+        {
             [NonSerialized]
             [FieldOffset(0x00)]
             private ushort blood_or_life_ms;
@@ -476,16 +532,20 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x03)]
             public byte eyesAmount;
 
-            public uint bloodMilliseconds {
-                get {
+            public uint bloodMilliseconds
+            {
+                get
+                {
                     if (stance == 1)
                         return blood_or_life_ms;
                     else
                         return 0;
                 }
             }
-            public uint lifeMilliseconds {
-                get {
+            public uint lifeMilliseconds
+            {
+                get
+                {
                     if (stance == 2)
                         return blood_or_life_ms;
                     else
@@ -499,7 +559,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
 
         [Serializable]
         [StructLayout(LayoutKind.Explicit)]
-        public struct NinjaJobMemory {
+        public struct NinjaJobMemory
+        {
             [FieldOffset(0x00)]
             public ushort hutonMilliseconds;
 
@@ -511,7 +572,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct ThaumaturgeJobMemory {
+        public struct ThaumaturgeJobMemory
+        {
             [FieldOffset(0x02)]
             public ushort umbralMilliseconds; // Number of ms left in umbral fire/ice.
 
@@ -520,9 +582,11 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct BlackMageJobMemory {
+        public struct BlackMageJobMemory
+        {
             [Flags]
-            public enum EnochianFlags : byte {
+            public enum EnochianFlags : byte
+            {
                 None = 0,
                 Enochian = 1,
                 Paradox = 2,
@@ -546,13 +610,26 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x07)]
             private EnochianFlags enochian_state;
 
-            public bool enochian => enochian_state.HasFlag(EnochianFlags.Enochian);
+            public bool enochian
+            {
+                get
+                {
+                    return enochian_state.HasFlag(EnochianFlags.Enochian);
+                }
+            }
 
-            public bool paradox => enochian_state.HasFlag(EnochianFlags.Paradox);
+            public bool paradox
+            {
+                get
+                {
+                    return enochian_state.HasFlag(EnochianFlags.Paradox);
+                }
+            }
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct WhiteMageJobMemory {
+        public struct WhiteMageJobMemory
+        {
             [FieldOffset(0x02)]
             public ushort lilyMilliseconds; // Number of ms left before lily gain.
 
@@ -564,13 +641,15 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct ArcanistJobMemory {
+        public struct ArcanistJobMemory
+        {
             [FieldOffset(0x04)]
             public byte aetherflowStacks;
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct SummonerJobMemory {
+        public struct SummonerJobMemory
+        {
             [FieldOffset(0x00)]
             public ushort tranceMilliseconds;
 
@@ -584,8 +663,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x07)]
             private byte stance;
 
-            public string[] usableArcanum {
-                get {
+            public string[] usableArcanum
+            {
+                get
+                {
                     var arcanums = new List<string>();
                     if ((stance & 0x20) != 0)
                         arcanums.Add("Ruby"); // Fire/Ifrit
@@ -598,8 +679,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
                 }
             }
 
-            public string activePrimal {
-                get {
+            public string activePrimal
+            {
+                get
+                {
                     if ((stance & 0xC) == 0x4)
                         return "Ifrit";
                     else if ((stance & 0xC) == 0x8)
@@ -611,8 +694,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
                 }
             }
 
-            public String nextSummoned {
-                get {
+            public String nextSummoned
+            {
+                get
+                {
                     if ((stance & 0x10) == 0)
                         return "Bahamut";
                     else
@@ -620,11 +705,18 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
                 }
             }
 
-            public int aetherflowStacks => stance & 0x3;
+            public int aetherflowStacks
+            {
+                get
+                {
+                    return stance & 0x3;
+                }
+            }
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct ScholarJobMemory {
+        public struct ScholarJobMemory
+        {
             [FieldOffset(0x02)]
             public byte aetherflowStacks;
 
@@ -640,8 +732,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
 
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct MonkJobMemory {
-            public enum Beast : byte {
+        public struct MonkJobMemory
+        {
+            public enum Beast : byte
+            {
                 None = 0,
                 Coeurl = 1,
                 Opo = 2,
@@ -667,15 +761,19 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x04)]
             private byte Nadi;
 
-            public string[] beastChakra {
-                get {
+            public string[] beastChakra
+            {
+                get
+                {
                     Beast[] _beasts = { beastChakra1, beastChakra2, beastChakra3 };
                     return _beasts.Select(a => a.ToString()).Where(a => a != "None").ToArray();
                 }
             }
 
-            public bool solarNadi {
-                get {
+            public bool solarNadi
+            {
+                get
+                {
                     if ((Nadi & 0x4) == 0x4)
                         return true;
                     else
@@ -683,8 +781,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
                 }
             }
 
-            public bool lunarNadi {
-                get {
+            public bool lunarNadi
+            {
+                get
+                {
                     if ((Nadi & 0x2) == 0x2)
                         return true;
                     else
@@ -694,7 +794,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct MachinistJobMemory {
+        public struct MachinistJobMemory
+        {
             [FieldOffset(0x00)]
             public ushort overheatMilliseconds;
 
@@ -714,14 +815,28 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x07)]
             private byte chargeTimerState;
 
-            public bool overheatActive => (chargeTimerState & 0x1) == 1;
+            public bool overheatActive
+            {
+                get
+                {
+                    return (chargeTimerState & 0x1) == 1;
+                }
+            }
 
-            public bool robotActive => (chargeTimerState & 0x2) == 1;
+            public bool robotActive
+            {
+                get
+                {
+                    return (chargeTimerState & 0x2) == 1;
+                }
+            }
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct AstrologianJobMemory {
-            public enum Card : byte {
+        public struct AstrologianJobMemory
+        {
+            public enum Card : byte
+            {
                 None = 0,
                 Balance = 1,
                 Bole = 2,
@@ -733,7 +848,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
                 Lady = 0x80,
             }
 
-            public enum Arcanum : byte {
+            public enum Arcanum : byte
+            {
                 None = 0,
                 Solar = 1,
                 Lunar = 2,
@@ -748,15 +864,30 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x06)]
             private byte _arcanumsmix;
 
-            public string heldCard => ((Card)(_heldCard & 0xF)).ToString();
+            public string heldCard
+            {
+                get
+                {
+                    return ((Card)(_heldCard & 0xF)).ToString();
+                }
+            }
 
-            public string crownCard => ((Card)(_heldCard & 0xF0)).ToString();
+            public string crownCard
+            {
+                get
+                {
+                    return ((Card)(_heldCard & 0xF0)).ToString();
+                }
+            }
 
-            public string[] arcanums {
-                get {
+            public string[] arcanums
+            {
+                get
+                {
                     var _arcanums = new List<Arcanum>();
-                    for (var i = 0; i < 3; i++) {
-                        var arcanum = (_arcanumsmix >> 2 * i) & 0x3;
+                    for (var i = 0; i < 3; i++)
+                    {
+                        int arcanum = (_arcanumsmix >> 2 * i) & 0x3;
                         _arcanums.Add((Arcanum)arcanum);
                     }
                     return _arcanums.Select(a => a.ToString()).Where(a => a != "None").ToArray();
@@ -765,7 +896,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
         };
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct SamuraiJobMemory {
+        public struct SamuraiJobMemory
+        {
             [FieldOffset(0x03)]
             public byte kenki;
 
@@ -776,15 +908,34 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
             [FieldOffset(0x05)]
             private byte sen_bits;
 
-            public bool setsu => (sen_bits & 0x1) != 0;
+            public bool setsu
+            {
+                get
+                {
+                    return (sen_bits & 0x1) != 0;
+                }
+            }
 
-            public bool getsu => (sen_bits & 0x2) != 0;
+            public bool getsu
+            {
+                get
+                {
+                    return (sen_bits & 0x2) != 0;
+                }
+            }
 
-            public bool ka => (sen_bits & 0x4) != 0;
+            public bool ka
+            {
+                get
+                {
+                    return (sen_bits & 0x4) != 0;
+                }
+            }
         }
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct SageJobMemory {
+        public struct SageJobMemory
+        {
             [FieldOffset(0x00)]
             public ushort addersgallMilliseconds; // the addersgall gauge elapsed in milliseconds, from 0 to 19999.
 
@@ -799,7 +950,8 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors {
         }
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct ReaperJobMemory {
+        public struct ReaperJobMemory
+        {
             [FieldOffset(0x00)]
             public byte soul;
 

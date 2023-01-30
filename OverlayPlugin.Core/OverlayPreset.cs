@@ -17,5 +17,10 @@ namespace RainbowMage.OverlayPlugin {
         public override string ToString() {
             return Name;
         }
+        public string Type { get; set; }
+        [JsonIgnore]
+        public int[] Size { get; set; }
+        public bool Locked { get; set; }
+        public List<string> Supports { get; set; }
     }
 }

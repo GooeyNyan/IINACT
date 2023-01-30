@@ -361,7 +361,7 @@ namespace RainbowMage.OverlayPlugin {
 
 
                 _logger.Log(LogLevel.Info, "LoadAddons: Enabling builtin Cactbot event source.");
-                registry.StartEventSource(new CactbotEventSource(_container));
+                registry.StartEventSource(new Cactbot.CactbotEventSource(_container));
 
                 registry.StartEventSources();
             }

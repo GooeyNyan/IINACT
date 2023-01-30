@@ -1,16 +1,22 @@
-﻿using RainbowMage.OverlayPlugin.MemoryProcessors;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using RainbowMage.OverlayPlugin.MemoryProcessors;
 
-namespace RainbowMage.OverlayPlugin.EventSources {
+namespace Cactbot
+{
     // TODO: replace these all with just JObjects instead of explicit classes.
-    public interface JSEvent {
+    public interface JSEvent
+    {
         string EventName();
     };
 
     // This class defines all the event |details| structures that go to each event type.
-    public class JSEvents {
-        public class Point3F {
+    public class JSEvents
+    {
+        public class Point3F
+        {
             public Point3F(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
 
             public float x = 0;
@@ -18,39 +24,45 @@ namespace RainbowMage.OverlayPlugin.EventSources {
             public float z = 0;
         }
 
-        public class ForceReloadEvent : JSEvent {
+        public class ForceReloadEvent : JSEvent
+        {
             public string EventName() { return "onForceReload"; }
         }
 
-        public class GameExistsEvent : JSEvent {
+        public class GameExistsEvent : JSEvent
+        {
             public GameExistsEvent(bool exists) { this.exists = exists; }
             public string EventName() { return "onGameExistsEvent"; }
 
             public bool exists;
         }
 
-        public class GameActiveChangedEvent : JSEvent {
+        public class GameActiveChangedEvent : JSEvent
+        {
             public GameActiveChangedEvent(bool active) { this.active = active; }
             public string EventName() { return "onGameActiveChangedEvent"; }
 
             public bool active;
         }
 
-        public class LogEvent : JSEvent {
+        public class LogEvent : JSEvent
+        {
             public LogEvent(List<String> logs) { this.logs = logs; }
             public string EventName() { return "onLogEvent"; }
 
             public List<string> logs;
         }
 
-        public class ImportLogEvent : JSEvent {
+        public class ImportLogEvent : JSEvent
+        {
             public ImportLogEvent(List<String> logs) { this.logs = logs; }
             public string EventName() { return "onImportLogEvent"; }
 
             public List<string> logs;
         }
 
-        public class InCombatChangedEvent : JSEvent {
+        public class InCombatChangedEvent : JSEvent
+        {
             public InCombatChangedEvent(bool in_act_combat, bool in_game_combat) { this.inACTCombat = in_act_combat; this.inGameCombat = in_game_combat; }
             public string EventName() { return "onInCombatChangedEvent"; }
 
@@ -58,23 +70,23 @@ namespace RainbowMage.OverlayPlugin.EventSources {
             public bool inGameCombat;
         }
 
-        public class ZoneChangedEvent : JSEvent {
+        public class ZoneChangedEvent : JSEvent
+        {
             public ZoneChangedEvent(string name) { this.zoneName = name; }
             public string EventName() { return "onZoneChangedEvent"; }
 
             public string zoneName;
         }
 
-        public class PlayerDiedEvent : JSEvent {
+        public class PlayerDiedEvent : JSEvent
+        {
             public string EventName() { return "onPlayerDied"; }
         }
 
-        public class PartyWipeEvent : JSEvent {
-            public string EventName() { return "onPartyWipe"; }
-        }
-
-        public class PlayerChangedEvent : JSEvent {
-            public PlayerChangedEvent(FFXIVProcess.EntityData e) {
+        public class PlayerChangedEvent : JSEvent
+        {
+            public PlayerChangedEvent(FFXIVProcess.EntityData e)
+            {
                 id = e.id;
                 level = e.level;
                 name = e.name;
@@ -91,7 +103,7 @@ namespace RainbowMage.OverlayPlugin.EventSources {
                 pos = new Point3F(e.pos_x, e.pos_y, e.pos_z);
                 rotation = e.rotation;
                 jobDetail = null;
-                bait = e.bait;
+                bait = (uint)e.bait;
                 debugJob = e.debug_job;
                 currentShield = e.shield_value;
             }
@@ -117,15 +129,18 @@ namespace RainbowMage.OverlayPlugin.EventSources {
 
             public Point3F pos;
             public float rotation;
-            public int bait;
+            public uint bait;
 
             // One of the FooJobDetails structures, depending on the value of |job|.
             public object jobDetail;
         }
 
-        public abstract class EntityChangedEvent {
-            public EntityChangedEvent(FFXIVProcess.EntityData e) {
-                if (e != null) {
+        public abstract class EntityChangedEvent
+        {
+            public EntityChangedEvent(FFXIVProcess.EntityData e)
+            {
+                if (e != null)
+                {
                     id = e.id;
                     level = e.level;
                     name = e.name;
@@ -155,8 +170,10 @@ namespace RainbowMage.OverlayPlugin.EventSources {
             public int distance = 0;
         }
 
-        public class SendSaveData : JSEvent {
-            public SendSaveData(string data) {
+        public class SendSaveData : JSEvent
+        {
+            public SendSaveData(string data)
+            {
                 this.data = data;
             }
 
@@ -165,27 +182,16 @@ namespace RainbowMage.OverlayPlugin.EventSources {
             public string data;
         }
 
-        public class DataFilesRead : JSEvent {
-            public DataFilesRead(Dictionary<string, string> files) {
+        public class DataFilesRead : JSEvent
+        {
+            public DataFilesRead(Dictionary<string, string> files)
+            {
                 this.files = files;
             }
 
             public string EventName() { return "onDataFilesRead"; }
 
             public Dictionary<string, string> files;
-        }
-
-        public class OnInitializeOverlay : JSEvent {
-            public OnInitializeOverlay(string location, Dictionary<string, string> files, string language) {
-                this.userLocation = location;
-                this.localUserFiles = files;
-                this.language = language;
-            }
-
-            public string EventName() { return "onInitializeOverlay"; }
-            public string userLocation;
-            public Dictionary<string, string> localUserFiles;
-            public string language;
         }
     }
 }

@@ -78,8 +78,15 @@ namespace RainbowMage.OverlayPlugin {
                 }
                 if (registry.ContainsKey(registeredCustomLogLineID)) {
                     var entry = registry[registeredCustomLogLineID];
-                    var Source = entry.Source.Replace("\r", "\\r").Replace("\n", "\\n");
-                    var Name = entry.Name.Replace("\r", "\\r").Replace("\n", "\\n");
+
+                    var Source = "";
+                    if (entry.Source != null)
+                        Source = entry.Source.Replace("\r", "\\r").Replace("\n", "\\n");
+
+                    var Name = "";
+                    if (entry.Name != null)
+                        Name = entry.Name.Replace("\r", "\\r").Replace("\n", "\\n");
+                    
                     repository.WriteLogLineImpl(registeredCustomLogLineID, DateTime.Now, $"{registeredCustomLogLineID}|{Source}|{Name}|{entry.Version}");
                 }
             }

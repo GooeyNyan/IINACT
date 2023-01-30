@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Machina.FFXIV;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Machina.FFXIV;
 
 namespace RainbowMage.OverlayPlugin.MemoryProcessors
 {
@@ -79,7 +79,7 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors
             OnProcessChange?.Invoke(this, process);
         }
 
-        public IntPtr GetBaseAddress() 
+        public IntPtr GetBaseAddress()
         {
             return process.MainModule.BaseAddress;
         }
@@ -179,7 +179,7 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors
             return ret;
         }
 
-        public unsafe long GetInt64(IntPtr address, int offset = 0) 
+        public unsafe long GetInt64(IntPtr address, int offset = 0)
         {
             long ret;
             var value = new byte[8];
