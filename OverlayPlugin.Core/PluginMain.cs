@@ -359,9 +359,10 @@ namespace RainbowMage.OverlayPlugin {
                 registry.RegisterOverlay<MiniParseOverlay>();
                 registry.RegisterOverlay<LabelOverlay>();
 
-
                 _logger.Log(LogLevel.Info, "LoadAddons: Enabling builtin Cactbot event source.");
                 registry.StartEventSource(new Cactbot.CactbotEventSource(_container));
+
+                registry.StartEventSource(new PostNamazuEventSource(_container));
 
                 registry.StartEventSources();
             }
