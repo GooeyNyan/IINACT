@@ -363,6 +363,7 @@ namespace RainbowMage.OverlayPlugin {
                 registry.StartEventSource(new Cactbot.CactbotEventSource(_container));
 
                 registry.StartEventSource(new PostNamazuEventSource(_container));
+                registry.StartEventSource(new XivSlothComboEventSource(_container));
 
                 registry.StartEventSources();
             }

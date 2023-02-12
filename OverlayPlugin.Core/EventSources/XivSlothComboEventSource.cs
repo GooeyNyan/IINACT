@@ -3,22 +3,21 @@ using System.Net.Http;
 
 namespace RainbowMage.OverlayPlugin.EventSources
 {
-    public class PostNamazuEventSource : EventSourceBase
+    public class XivSlothComboEventSource : EventSourceBase
     {
         private static readonly HttpClient client = new HttpClient();
 
         public BuiltinEventConfig Config { get; set; }
 
-        public PostNamazuEventSource(TinyIoCContainer container) : base(container)
+        public XivSlothComboEventSource(TinyIoCContainer container) : base(container)
         {
-            RegisterEventHandler("PostNamazu", DoAction);
+            RegisterEventHandler("XIVSlothCombo", DoAction);
         }
 
         private JToken DoAction(JObject jo)
         {
-            string command = jo["c"]?.Value<string>() ?? "null";
             string payload = jo["p"]?.Value<string>() ?? "";
-            client.PostAsync("http://127.0.0.1:1002/" + command, new StringContent(payload));
+            client.PostAsync("http://127.0.0.1:47775/", new StringContent(payload));
             return null;
         }
 
