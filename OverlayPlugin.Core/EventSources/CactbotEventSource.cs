@@ -9,8 +9,6 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Globalization;
 using Machina.FFXIV;
-using Microsoft.VisualBasic;
-using RainbowMage.OverlayPlugin.MemoryProcessors;
 
 namespace Cactbot
 {
@@ -83,7 +81,7 @@ namespace Cactbot
         {
             Name = "Cactbot Config";
 
-            RegisterPresets();
+            //RegisterPresets();
 
             RegisterEventTypes(new List<string>()
               {
@@ -528,6 +526,7 @@ namespace Cactbot
             var user_files = new Dictionary<string, string>();
             string top_dir;
             string sub_dir = null;
+
             try
             {
                 top_dir = new Uri(config_dir).LocalPath;
@@ -660,7 +659,8 @@ namespace Cactbot
         {
             Dictionary<string, string> user_files;
             var overlay_name = msg.ContainsKey("overlayName") ? msg["overlayName"].ToString() : null;
-            GetUserConfigDirAndFiles(msg["source"].ToString(), overlay_name, out string config_dir, out user_files);
+            //GetUserConfigDirAndFiles(msg["source"].ToString(), overlay_name, out string config_dir, out user_files);
+            GetUserConfigDirAndFiles(msg["source"].ToString(), overlay_name, out var config_dir, out user_files);
 
             var result = new JObject();
             result["userLocation"] = config_dir;
@@ -697,39 +697,39 @@ namespace Cactbot
             bool IOverlayPreset.Modern => throw new NotImplementedException();
         }
 
-        private void RegisterPreset(string dirName, int width, int height, string nameOverride = null, string fileOverride = null)
-        {
-            var path = "D:\\Games\\DieMoeAct\\Plugins\\ACT.OverlayPlugin\\cactbot";
-            string lc = dirName.ToLowerInvariant();
-            var name = nameOverride != null ? nameOverride : dirName;
-            var filename = (fileOverride != null ? fileOverride : dirName).ToLowerInvariant() + ".html";
-            var uri = new Uri(Path.Combine(path, "ui", lc, filename));
+        //private void RegisterPreset(string dirName, int width, int height, string nameOverride = null, string fileOverride = null)
+        //{
+        //    var path = new VersionChecker(this.logger).GetCactbotDirectory();
+        //    string lc = dirName.ToLowerInvariant();
+        //    var name = nameOverride != null ? nameOverride : dirName;
+        //    var filename = (fileOverride != null ? fileOverride : dirName).ToLowerInvariant() + ".html";
+        //    var uri = new Uri(Path.Combine(path, "ui", lc, filename));
 
-            var registry = container.Resolve<Registry>();
-            registry.RegisterOverlayPreset2(new OverlayPreset
-            {
-                Name = $"Cactbot {name}",
-                Url = uri.AbsoluteUri,
-                Size = new int[] { width, height },
-                Locked = false,
-            });
-        }
+        //    var registry = container.Resolve<Registry>();
+        //    registry.RegisterOverlayPreset2(new OverlayPreset
+        //    {
+        //        Name = $"Cactbot {name}",
+        //        Url = uri.AbsoluteUri,
+        //        Size = new int[] { width, height },
+        //        Locked = false,
+        //    });
+        //}
 
-        private void RegisterDpsPreset(string name, string file, int width, int height)
-        {
-            var path = "D:\\Games\\DieMoeAct\\Plugins\\ACT.OverlayPlugin\\cactbot";
-            string lc = name.ToLowerInvariant();
-            var uri = new System.Uri(Path.Combine(path, "ui", "dps", lc, $"{file}.html"));
+        //private void RegisterDpsPreset(string name, string file, int width, int height)
+        //{
+        //    var path = new VersionChecker(this.logger).GetCactbotDirectory();
+        //    string lc = name.ToLowerInvariant();
+        //    var uri = new System.Uri(Path.Combine(path, "ui", "dps", lc, $"{file}.html"));
 
-            var registry = container.Resolve<Registry>();
-            registry.RegisterOverlayPreset2(new OverlayPreset
-            {
-                Name = $"Cactbot DPS {name}",
-                Url = uri.AbsoluteUri,
-                Size = new int[] { width, height },
-                Locked = false,
-            });
-        }
+        //    var registry = container.Resolve<Registry>();
+        //    registry.RegisterOverlayPreset2(new OverlayPreset
+        //    {
+        //        Name = $"Cactbot DPS {name}",
+        //        Url = uri.AbsoluteUri,
+        //        Size = new int[] { width, height },
+        //        Locked = false,
+        //    });
+        //}
 
         private void RegisterExternalPreset(string name, string url, int width, int height)
         {
@@ -764,21 +764,21 @@ namespace Cactbot
 
         private void RegisterPresets()
         {
-            RegisterPreset("Raidboss", width: 1100, height: 300, "PresetRaidbossCombined", "raidboss");
-            RegisterPreset("Raidboss", width: 1100, height: 300, "PresetRdmty", "raidboss_alerts_only");
-            RegisterPreset("Raidboss", width: 320, height: 220, "PresetRdmty", "raidboss_timeline_only");
-            RegisterPreset("Jobs", width: 600, height: 300, "PresetJobs");
-            RegisterPreset("Eureka", width: 400, height: 400, "PresetEureka");
-            RegisterPreset("Fisher", width: 500, height: 500, "PresetFisher");
-            RegisterPreset("OopsyRaidsy", width: 400, height: 400, "PresetOopsyRaidsy");
-            RegisterPreset("PullCounter", width: 200, height: 200, "PresetPullCounter");
-            RegisterPreset("Radar", width: 300, height: 400, "PresetRadar");
-            RegisterPreset("Test", width: 300, height: 300, "PresetTest");
+            //RegisterPreset("Raidboss", width: 1100, height: 300, "PresetRaidbossCombined", "raidboss");
+            //RegisterPreset("Raidboss", width: 1100, height: 300, "PresetRdmty", "raidboss_alerts_only");
+            //RegisterPreset("Raidboss", width: 320, height: 220, "PresetRdmty", "raidboss_timeline_only");
+            //RegisterPreset("Jobs", width: 600, height: 300, "PresetJobs");
+            //RegisterPreset("Eureka", width: 400, height: 400, "PresetEureka");
+            //RegisterPreset("Fisher", width: 500, height: 500, "PresetFisher");
+            //RegisterPreset("OopsyRaidsy", width: 400, height: 400, "PresetOopsyRaidsy");
+            //RegisterPreset("PullCounter", width: 200, height: 200, "PresetPullCounter");
+            //RegisterPreset("Radar", width: 300, height: 400, "PresetRadar");
+            //RegisterPreset("Test", width: 300, height: 300, "PresetTest");
             // FIXME: these should be consistently named.
-            RegisterDpsPreset("PresetXephero", "xephero-cactbot", width: 600, height: 400);
-            RegisterDpsPreset("PresetRdmty", "dps", width: 600, height: 400);
+            //RegisterDpsPreset("PresetXephero", "xephero-cactbot", width: 600, height: 400);
+            //RegisterDpsPreset("PresetRdmty", "dps", width: 600, height: 400);
             // External Overlays using Cactbot Plugin
-            RegisterExternalPreset("PresetZeffUI", "https://zeffuro.github.io/ZeffUI/", width: 800, height: 600);
+            //RegisterExternalPreset("PresetZeffUI", "https://zeffuro.github.io/ZeffUI/", width: 800, height: 600);
         }
 
         // State that is tracked and sent to JS when it changes.

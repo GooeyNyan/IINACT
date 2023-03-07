@@ -81,16 +81,15 @@ namespace Cactbot
         {
             get
             {
-                return "D:\\Games\\DieMoeAct\\Plugins\\ACT.OverlayPlugin\\cactbot\\user";
-                //if (!OverlayData.TryGetValue("options", out JToken options))
-                //    return null;
-                //var general = options["general"];
-                //if (general == null)
-                //    return null;
-                //var dir = general["CactbotUserDirectory"];
-                //if (dir == null)
-                //    return null;
-                //return dir.ToString();
+                if (!OverlayData.TryGetValue("options", out JToken options))
+                    return null;
+                var general = options["general"];
+                if (general == null)
+                    return null;
+                var dir = general["CactbotUserDirectory"];
+                if (dir == null)
+                    return null;
+                return dir.ToString();
             }
             set
             {
@@ -105,7 +104,6 @@ namespace Cactbot
                     general = new JObject();
                     options["general"] = general;
                 }
-                general["CactbotUserDirectory"] = "D:\\Games\\DieMoeAct\\Plugins\\ACT.OverlayPlugin\\cactbot\\user";
             }
         }
     }
