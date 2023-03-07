@@ -105,7 +105,7 @@ namespace FetchDependencies
             //    url = myResp.GetResponseHeader("Location");
             //var bcd = url.Split(@"/")[7];
             var httpClient = new HttpClient();
-            await using var downloadStream = await httpClient.GetStreamAsync($"https://github.com/TundraWork/FFXIV_ACT_Plugin_CN/releases/download/2.23.1.1/FFXIV_ACT_Plugin.dll");
+            await using var downloadStream = await httpClient.GetStreamAsync($"https://github.com/TundraWork/FFXIV_ACT_Plugin_CN/releases/download/2.23.3.1/FFXIV_ACT_Plugin_ADAPT_PLUGIN_ONLY.dll");
             await using var zipFileStream = new FileStream(path, FileMode.Create);
             await downloadStream.CopyToAsync(zipFileStream);
             zipFileStream.Close();
